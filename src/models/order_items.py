@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.services.db_session import SqlAlchemyBase
 
@@ -12,4 +12,7 @@ class OrderItem(SqlAlchemyBase):
     product_id: Mapped[int] = mapped_column(
         ForeignKey("products.product_id"), nullable=False
     )
-    count: Mapped[int] = mapped_column(nullable=False, default=0)
+    quantity: Mapped[int] = mapped_column(nullable=False, default=0)
+
+    order = relationship("Order", back_populates="order_items")
+    product = relationship("Product")

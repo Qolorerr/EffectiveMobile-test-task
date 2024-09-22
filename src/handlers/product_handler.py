@@ -49,7 +49,7 @@ async def post_product(args: PostProduct):
         },
     },
 )
-async def get_products(limit: int | None = None, offset: int | None = 0):
+async def get_products(limit: int | None = None, offset: int = 0):
     products = await service.get_products(limit, offset)
     products_to_export = list(map(lambda x: x.as_dict(), products))
     return JSONResponse(content=products_to_export, status_code=status.HTTP_200_OK)

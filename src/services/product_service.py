@@ -37,11 +37,9 @@ async def get_products(
 
 async def get_product(id: int) -> Product:
     async with create_session() as session:
-        query = select(Product).where(Product.product_id == id)
-        results: list[Product] = (await session.scalars(query)).all()
-        if len(results) < 1:
+        product = await session.get(Product, id)
+        if product is None:
             raise NotFoundError("Can't find product with this id")
-        product = results[0]
         return product
 
 
