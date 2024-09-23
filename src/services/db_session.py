@@ -9,10 +9,12 @@ SqlAlchemyBase = dec.declarative_base()
 __factory = None
 
 
-def base_init(db_file: Path):
+def base_init(db_file: Path | str):
     global __factory
     if __factory:
         return
+    if not isinstance(db_file, Path):
+        db_file = Path(db_file)
     db_file.parent.mkdir(parents=True, exist_ok=True)
     conn_str = f"sqlite+aiosqlite:///{db_file}?check_same_thread=False"
     print(f"Connection to base {db_file}\n")
