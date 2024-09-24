@@ -1,5 +1,7 @@
 import asyncio
 from pathlib import Path
+
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import Session
 import sqlalchemy.ext.declarative as dec
@@ -32,3 +34,11 @@ def base_init(db_file: Path | str):
 def create_session() -> Session:
     global __factory
     return __factory()
+
+
+async def clear_all_rows():
+    async with create_session() as session:
+        async with session.begin():
+            for model in SqlAlchemyBase.__subclasses__():
+                await session.execute(text(f"DELETE FROM {model.__tablename__}"))
+            await session.commit()

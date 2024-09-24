@@ -32,22 +32,22 @@ DEFAULT_PRODUCT_2 = {
                 "price": 32.1,
                 "quantity": 1,
             }
-DEFAULT_PRODUCT_3 = {
-                "name": "Name of third product",
-                "description": "Some description",
-                "price": 200,
-                "quantity": 15,
-            }
+DEFAULT_PRODUCTS = [DEFAULT_PRODUCT_1, DEFAULT_PRODUCT_2]
 
 
-async def _post_product(post_product: dict[str, Any]) -> Response:
+async def _post_product(post_product: dict[str, Any]) -> int:
     async with AsyncClient(app=app, base_url="http://test") as ac:
         response = await ac.post(
             URL,
             json=post_product,
         )
     assert response.status_code == 201
-    return response
+    product_id = response.json()["id"]
+    return product_id
+
+
+async def _post_products(post_products: list[dict[str, Any]]) -> list[int]:
+    return [await _post_product(post_product) for post_product in post_products]
 
 
 async def _get_product(product_id: int) -> Response:
@@ -66,6 +66,11 @@ async def _delete_product(product_id: int) -> Response:
         )
     assert response.status_code == 204
     return response
+
+
+async def _delete_products(product_ids: list[int]) -> None:
+    for product_id in product_ids:
+        await _delete_product(product_id)
 
 
 @pytest.mark.parametrize(
@@ -120,17 +125,14 @@ async def test_post_product(post_product: dict[str, Any], status_code: int) -> N
 @pytest.mark.parametrize(
     "post_products, result_products, params",
     [
-        ([DEFAULT_PRODUCT_1, DEFAULT_PRODUCT_2], [DEFAULT_PRODUCT_1, DEFAULT_PRODUCT_2], {}),
-        ([DEFAULT_PRODUCT_1, DEFAULT_PRODUCT_2], [DEFAULT_PRODUCT_1], {"limit": 1}),
-        ([DEFAULT_PRODUCT_1, DEFAULT_PRODUCT_2], [DEFAULT_PRODUCT_2], {"limit": 1, "offset": 1}),
+        (DEFAULT_PRODUCTS, [DEFAULT_PRODUCT_1, DEFAULT_PRODUCT_2], {}),
+        (DEFAULT_PRODUCTS, [DEFAULT_PRODUCT_1], {"limit": 1}),
+        (DEFAULT_PRODUCTS, [DEFAULT_PRODUCT_2], {"limit": 1, "offset": 1}),
     ],
 )
 async def test_get_products(post_products: list[dict[str, Any]], result_products: list[dict[str, Any]], params: dict[str, Any]) -> None:
     # Create items
-    product_ids = []
-    for product in post_products:
-        response = await _post_product(product)
-        product_ids.append(response.json()["id"])
+    product_ids = await _post_products(post_products)
 
     # Get items
     async with AsyncClient(app=app, base_url="http://test") as ac:
@@ -147,8 +149,7 @@ async def test_get_products(post_products: list[dict[str, Any]], result_products
             assert value == response_products[i][key]
 
     # Delete items
-    for product_id in product_ids:
-        await _delete_product(product_id)
+    await _delete_products(product_ids)
 
 
 @pytest.mark.parametrize(
@@ -161,8 +162,7 @@ async def test_get_products(post_products: list[dict[str, Any]], result_products
 )
 async def test_get_product(post_product: dict[str, Any], status_code: int, index: int | None) -> None:
     # Create item
-    response = await _post_product(post_product)
-    product_id = response.json()["id"]
+    product_id = await _post_product(post_product)
 
     # Get item
     async with AsyncClient(app=app, base_url="http://test") as ac:
@@ -190,8 +190,7 @@ async def test_get_product(post_product: dict[str, Any], status_code: int, index
 )
 async def test_put_product(post_product: dict[str, Any], put_product: dict[str, Any], status_code: int, index: int | None) -> None:
     # Create item
-    response = await _post_product(post_product)
-    product_id = response.json()["id"]
+    product_id = await _post_product(post_product)
 
     # Put item
     async with AsyncClient(app=app, base_url="http://test") as ac:
@@ -220,8 +219,7 @@ async def test_put_product(post_product: dict[str, Any], put_product: dict[str, 
 )
 async def test_delete_product(post_product: dict[str, Any], status_code: int, index: int | None) -> None:
     # Create item
-    response = await _post_product(post_product)
-    product_id = response.json()["id"]
+    product_id = await _post_product(post_product)
 
     # Delete item
     async with AsyncClient(app=app, base_url="http://test") as ac:

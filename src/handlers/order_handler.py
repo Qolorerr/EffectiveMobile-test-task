@@ -22,7 +22,7 @@ router = APIRouter()
         404: {"description": "Product not found"},
     },
 )
-async def post_product(args: PostOrder):
+async def post_order(args: PostOrder):
     try:
         order = await service.post_order(args)
     except NotFoundError as e:
