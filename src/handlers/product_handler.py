@@ -10,6 +10,7 @@ import src.services.product_service as service
 router = APIRouter()
 
 
+@router.post("", include_in_schema=False)
 @router.post(
     "/",
     responses={
@@ -26,6 +27,7 @@ async def post_product(args: PostProduct):
     )
 
 
+@router.get("", include_in_schema=False)
 @router.get(
     "/",
     responses={
